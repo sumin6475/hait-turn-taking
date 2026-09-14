@@ -1,0 +1,66 @@
+---
+status: accepted
+date: 2026-09-08
+---
+
+# The candidate list is computed from the board, never from what Alex has not said
+
+The live candidate list (`0007`) is derived from `coverage` and `score` over the
+**board** — traits a human has surfaced, plus traits Alex has actually said. Alex's
+unspoken profile Z does not enter it.
+
+## Why the obvious alternative poisons the measurement
+
+Alex holds a full profile the humans do not. Computing the list over everything
+Alex knows would converge Alex on the pooled answer ahead of the group in every
+condition — and in the leader conditions Alex would then steer the discussion
+toward it. Decision accuracy would be measuring how good Alex's card is, in a task
+whose entire point is whether the *group* assembles the picture.
+
+Computing over the board means Alex's own information counts toward the list only
+once Alex has said it, which is also the moment the pooling DV records it. Alex
+may push a candidate up, but only by paying for it in a measurable disclosure.
+
+This property was already present in the code and is now depended on:
+`allSurfacedIds` in `informationPools.ts` reads human `revealedIds` ∪
+`aiSurfacedIds`, and unspoken Z is in neither. (Until 2026-09-14 this sentence cited
+`surfacedByCandidate` and `poolingTally.ts:125`; both are gone.)
+
+## The removal rule below is superseded
+
+**Amendment, 2026-09-08.** The rule stated in this section reads `score`, and
+`0009` withdraws it: the dataset makes board score a sign-inverted estimate of
+the pooled score while the board is shared-dominated, so no threshold on it can
+be safe. A candidate now leaves the list on coverage alone. The section is kept
+because the reasoning that follows it — what the middle clause was for, and why
+the answer's shape produces it — is what `0009` argues from.
+
+The decision this ADR exists for is unaffected: the list is computed from the
+board and never from Alex's unspoken profile.
+
+**Amendment, 2026-09-13.** `0011` withdraws coverage as well: a candidate leaves
+once a human has pooled something of their own about it.
+
+## The removal rule, and the clause that matters
+
+A candidate leaves the list only when its coverage is at least 4, its coverage is
+within 2 of the best-covered live candidate, and its score trails the best live
+score by at least 2.
+
+The middle clause is the load-bearing one. Without it a candidate falls out for
+having been *ignored* rather than for being weak — which is precisely the shape a
+hidden profile produces, and precisely the error the group is at risk of. In
+T-C3-003 the group tried to eliminate a candidate at seq 4, before any trait for
+any candidate was on the board; that candidate was the one they eventually chose.
+
+Score is matches minus misses, every trait weighing the same. `CONTEXT.md` records
+that treating one trait as decisive is an error available to the group; it is not
+one Alex may commit on the group's behalf, which is also why no count, ratio or
+score is ever spoken.
+
+## The thresholds are chosen, not derived
+
+4 and 2 have no empirical basis. The only large corpus is a different
+architecture and cannot be replayed against them. The list is therefore computed
+and logged without reaching speech until a session has been read against those
+numbers — see `.scratch/leader-decision-frame/issues/02`.

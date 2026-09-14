@@ -1,0 +1,92 @@
+# V2 Main Judge tripwire set.
+# Direct address, followup, cooldown, mediation cadence, summary, and closing
+# are intentionally absent: the runtime handles them outside Main Judge.
+# Each case supplies the same compact signal that production supplies.
+
+cases:
+  - id: J1
+    desc: "Greeting/logistics with no candidate focus stays silent"
+    msgs_since_alex: 99
+    context:
+      - { speaker: "Participant X", text: "Hello" }
+      - { speaker: "Participant Y", text: "Did the timer start?" }
+    signal:
+      focusCandidate: null
+      exchangeClass: procedural
+      privateContributionIds: []
+    expect: { decision: silent, evidence: none, selectedTraitId: null }
+
+  - id: J2
+    desc: "A human-directed question is not converted into an ordinary contribution"
+    msgs_since_alex: 2
+    context:
+      - { speaker: "Participant X", text: "A seems reliable." }
+      - { speaker: "Participant X", text: "Y, what do you have for B?" }
+    signal:
+      focusCandidate: B
+      exchangeClass: unclear
+      privateContributionIds: []
+    expect: { decision: silent, evidence: none, selectedTraitId: null }
+
+  - id: J3
+    desc: "A relevant unsurfaced private fact produces one selected contribution"
+    msgs_since_alex: 3
+    context:
+      - { speaker: "Participant X", text: "A seems calm under pressure." }
+      - { speaker: "Participant Y", text: "We should check whether A has any safety weaknesses." }
+    signal:
+      focusCandidate: A
+      exchangeClass: substantive
+      privateContributionIds: [A_p4]
+    expect:
+      decision: contribute
+      evidence: relevant_unsurfaced_information
+      selectedTraitId: A_p4
+
+  - id: J4
+    desc: "A preference alone does not justify intervention"
+    msgs_since_alex: 3
+    context:
+      - { speaker: "Participant X", text: "I think B is best." }
+      - { speaker: "Participant Y", text: "I'm leaning B too." }
+    signal:
+      focusCandidate: B
+      exchangeClass: preference
+      privateContributionIds: []
+    expect: { decision: silent, evidence: none, selectedTraitId: null }
+
+  - id: J5
+    desc: "A human-to-human low-signal acknowledgment does not require Alex uptake"
+    msgs_since_alex: 3
+    context:
+      - { speaker: "Participant X", text: "That covers the main point on C." }
+      - { speaker: "Participant Y", text: "Got it, thanks." }
+    signal:
+      focusCandidate: C
+      exchangeClass: acknowledgment
+      privateContributionIds: []
+    expect: { decision: silent, evidence: none, selectedTraitId: null }
+
+  - id: J6
+    desc: "No focus and no private contribution defaults to silent"
+    msgs_since_alex: 5
+    context:
+      - { speaker: "Participant X", text: "We have several things to consider." }
+      - { speaker: "Participant Y", text: "Yes, let's keep going." }
+    signal:
+      focusCandidate: null
+      exchangeClass: substantive
+      privateContributionIds: []
+    expect: { decision: silent, evidence: none, selectedTraitId: null }
+
+  - id: J7
+    desc: "Post-generation re-evaluation does not repeat a point Alex just covered"
+    msgs_since_alex: 0
+    context:
+      - { speaker: "Participant X", text: "A looks safer because of danger awareness." }
+      - { speaker: "Alex", text: "A's danger awareness does support the safety case." }
+    signal:
+      focusCandidate: A
+      exchangeClass: substantive
+      privateContributionIds: []
+    expect: { decision: silent, evidence: none, selectedTraitId: null }

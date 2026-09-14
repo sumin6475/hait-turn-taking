@@ -1,0 +1,70 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+client/node_modules
+server/node_modules
+
+# Build
+dist
+dist-ssr
+server/dist
+
+# Env — 실제 비밀 값은 커밋하지 않음 (.env.example 만 올림)
+server/.env
+.env
+.env.local
+*.local
+.env.bak*
+.env.*.bak
+
+# Vite
+client/.vite
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.obsidian/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+#else
+tshandbook.md
+eval-results/
+
+# Architecture docs (local agent-generated, not tracked).
+# The root ARCHITECTURE.md is the exception: it is a deliberate map of the
+# pipeline and the seams, written to be read by the next person on this repo.
+INTERVENTION_LOGIC.md
+MEMORY.md
+
+# Analysis reports (local notes, not tracked)
+# `docs/*` rather than `docs/`: git never descends into an excluded directory,
+# so the negation below only works if the directory itself stays visible.
+docs/*
+# Two exceptions, each narrow: the agent-skill configuration, which CLAUDE.md
+# points at, and the architecture decision records. Both have to travel with the
+# repo. Everything else under docs/ stays local notes, deliberately.
+!docs/agents/
+!docs/adr/
+!docs/measurements.md
+cursor_steps/
+IRB/
+# prompt-management-system: the authoring tool was removed from the repo on 2026-09-14.
+# A local copy may remain, with its own .env; it must never be re-added.
+prompt-management-system/
+# Pilot data exports carry participant messages. Never commit them.
+server/pilot-export.json

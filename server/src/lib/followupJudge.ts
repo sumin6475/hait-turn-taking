@@ -1,0 +1,96 @@
+// [Step 54] 팔로업 판정기 — "이 사람 메시지에 Alex가 바로 이어서 답해야 하나" yes/no 하나만.
+// 본 judge(interventionJudge.ts)와 분리한다: 본 judge는 매 턴 도는 예산 프롬프트이고,
+// 여기에 문장을 얹으면 Step 40B 회귀(build_on 오분류)가 재현된다 (ADR D0-1/D0-2).
+import OpenAI from "openai";
+import { z } from "zod";
+import { zodTextFormat } from "openai/helpers/zod";
+import { config } from "../config.js";
+
+const client = new OpenAI({ apiKey: config.openaiApiKey, baseURL: config.openaiApiBase });
+const MODEL = "gpt-4o-mini";
+const MAX_TOKENS = 16;
+const TIMEOUT_MS = 5_000;
+export const FOLLOWUP_WINDOW = 4; // Alex 턴 포함 최근 4줄
+
+interface FollowupTranscriptMessage {
+  seq?: number;
+  senderRole: string;
+  speaker: string;
+  content: string;
+}
+
+export function buildFollowupCandidateTranscript(
+  messages: FollowupTranscriptMessage[],
+): Array<{ speaker: string; content: string }> | null {
+  let lastAiIndex = -1;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.senderRole === "ai") {
+      lastAiIndex = index;
+      break;
+    }
+  }
+  if (lastAiIndex < 0) return null;
+
+  const humanMessages = messages
+    .slice(lastAiIndex + 1)
+    .filter((message) => message.senderRole !== "ai");
+  if (!humanMessages.length) return null;
+  const humanSpeakers = new Set(humanMessages.map((message) => message.senderRole));
+  if (humanSpeakers.size !== 1) return null;
+
+  // Preserve Alex's turn even when one person split a reply across several chat messages.
+  return [messages[lastAiIndex]!, ...humanMessages.slice(-(FOLLOWUP_WINDOW - 1))].map(
+    ({ speaker, content }) => ({ speaker, content }),
+  );
+}
+
+const Schema = z.object({ answer: z.boolean() });
+
+const SYSTEM = `Alex spoke in a small team chat, and only one person has spoken since that Alex turn. The person may have split one reply across multiple chat messages. Decide one thing: is the latest message aimed at Alex and waiting for Alex to respond?
+
+Answer true ONLY when the reply clearly does one of these:
+- asks Alex something, or asks for what Alex has or thinks
+- pushes back on, questions, or checks something Alex just said
+- hands the floor to Alex, or asks Alex whether to proceed
+
+Answer false for everything else, and false is the common case. In particular:
+- the reply is addressed to the other teammate, not to Alex
+- it is a low-signal reaction with no request in it ("ok", "yeah", "same here", "right")
+- an earlier line was a low-signal reaction, but the latest line is not aimed at Alex
+- the people are carrying on with each other and simply did not take up what Alex said
+- it adds their own information without asking Alex anything
+
+When it is unclear, answer false.
+
+Output JSON only.`;
+
+export async function isFollowupToAlex(
+  transcript: { speaker: string; content: string }[],
+): Promise<boolean | null> {
+  const lines = transcript.map((t) => `${t.speaker}: ${t.content}`).join("\n");
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const resp = await client.responses.parse(
+      {
+        model: MODEL,
+        temperature: 0,
+        max_output_tokens: MAX_TOKENS,
+        input: [
+          { role: "system", content: SYSTEM },
+          {
+            role: "user",
+            content: `${lines}\n\nThe last line is the reply to judge. Output JSON only.`,
+          },
+        ],
+        text: { format: zodTextFormat(Schema, "followup_decision") },
+      },
+      { signal: ctrl.signal },
+    );
+    clearTimeout(to);
+    return resp.output_parsed?.answer ?? null;
+  } catch {
+    clearTimeout(to);
+    return null; // 실패 = 판정 없음 = 면제 안 함 (보수적)
+  }
+}
