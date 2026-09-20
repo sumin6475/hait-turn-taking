@@ -10,7 +10,7 @@ file is stale.
 
 Read §7 before changing anything that counts traits.
 
-**Audited at** `07b0728`, 2026-09-09; dead-code sweep 2026-09-14. Prompt snapshot `1.12.0`; Judge prompt v14.
+**Audited at** `07b0728`, 2026-09-09; dead-code sweep 2026-09-14. Prompt snapshot `1.12.0`; Judge prompt v15.
 
 ---
 
@@ -342,6 +342,17 @@ narrowed to A and B, and C — the candidate whose pooled profile is the right
 answer, and the one nobody had brought their own notes on — left the table at
 seq 42 and never came back.
 
+`detectMediationEvidence` reads the letters a window **returns to**, not every
+letter in it. It used to count each mention, and one of the four candidate
+letters collides with an English word: in S-C4-003 seq 6 a participant wrote "A
+short overall for each candidate's strengths and weaknesses", the leading
+article counted as Candidate A, the distinct count came to three — one over the
+threshold — and concentration stayed unlatched through the whole stretch where
+the group had settled on D and the Chair should have widened the field. Counting
+only the repeated letters drops the stray article without a word list to keep
+patching, and drops the symmetrical case with it: four candidates named once each
+is a wide discussion, not a concentrated one.
+
 `mediationAvailableFor` now offers the move: a leader condition and a live latch,
 gated on the cooldown like every other voluntary act. What it deliberately does
 **not** read is `buildOnsSinceMediation`. "Mediate every two build-ons" is
@@ -357,6 +368,29 @@ about the shape of the discussion, not its contents.
 Replayed over S-C2-002's 34 recorded turns, three flipped to `mediate` (anchors
 49, 52, 55) and no other turn changed act. One of the three took the turn the
 Chair had spent on its recap.
+
+#### What a turn asks for when the card is spent
+
+There is nothing in this task but the cards. In S-C4-003 a participant asked for
+an overview at seq 6, Alex answered with twenty of its notes, and from seq 14 the
+Judge had an empty eligible list for fourteen consecutive turns. Four of them —
+seqs 30, 32, 34 and 36 — asked the group for "concrete examples", "specific
+incidents" and "concrete evidence" that a trait had an effect. Nobody has such a
+thing, so the question can only be answered by inventing one, and a participant
+had to say so: *"We have to use what we currently have at hand"*.
+
+Two sentences close it. The Judge is told the notes are the whole world and may
+never write a brief asking for an example, incident, anecdote, source or witness;
+the same rule reaches the writer on the two direct-reply routes. And a spent card
+no longer makes the turn empty: while the coverage line still names candidates
+nobody has brought their own notes on, the brief takes up what the people just
+said **and** asks what they still hold on that candidate. The instruction to do
+that was already in the prompt — it simply had an unguarded alternative to reach
+for.
+
+Replayed over S-C4-003's twenty turns, briefs asking for something outside the
+notes went from four to two, and both survivors sit on a transcript where Alex
+had already asked — the messages the fix prevents upstream.
 
 #### Where Alex's lean is decided
 
@@ -668,9 +702,18 @@ fact nobody had stated.
 
 `validateExtractedTraitMentions` now reads the attribution itself: a quote whose
 sentence names a different candidate is rejected in every case, and for the
-shared-phrase pair an attribution is *required* — there, and only there, it may
-reach back to the nearest candidate named earlier in the message, because the
-alternative is crediting both.
+shared-phrase pair an attribution is *required*. It looks in three places in
+order — the name the quote itself carries, then the quote's own sentence, then
+(for that pair only) the nearest candidate named earlier in the message, because
+the alternative there is crediting both.
+
+The attribution runs **before** the duplicate-quote rule, and the ordering is the
+point. Asked about "is considered arrogant" the verifier returns both ids on one
+quote; the duplicate rule saw one quote on two ids and rejected both, so
+S-C4-003 seq 7 — Alex's own overview, saying plainly that B is considered
+arrogant — put it on the board nowhere, and it arrived five messages late at
+seq 12. The rule exists to stop one generic span being spread across several ids;
+a quote attribution has already assigned to exactly one candidate is not that.
 
 Recall is the other half, and it fails earlier: the verifier only ever sees what
 the matcher already half-found, so a paraphrase the registry does not carry dies
